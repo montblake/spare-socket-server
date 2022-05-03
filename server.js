@@ -35,19 +35,30 @@ wss.getUniqueID = function () {
 wss.on('connection', (socket, request, client) => {
     //  START HERE, a connection is made
     console.log('a connection has been made');
-    socket.id = wss.getUniqueID();
-    let message = {
-        type: 'welcome', userID: socket.id
-    }
+    // socket.id = wss.getUniqueID();
+    // let message = {
+    //     type: 'welcome', userID: socket.id
+    // }
 
-    socket.send(JSON.stringify(message), ()=>{
-        console.log('welcome message sent');
-    });
+    // socket.send(JSON.stringify(message), ()=>{
+    //     console.log('welcome message sent');
+    // });
+
+    socket.on('message', (message)=>{
+        message = JSON.parse(message);
+        switch(message.type){
+            case 'new user':
+                socket.id = message.userObj.userID;
+                wss.currentSockets.push(message.userObj);
+                console.log(wss.currentSockets);
+                break;
+            default: 
+                console.log('message type unrecognized');
+        }
+    })
 
     socket.on('close', (cause) => {
         console.log('socket disconnected', socket.id);
-        console.log(cause);
-        console.log(wss.currentSockets);
         // should remove socket from wss.currentSockets
         for (let i = 0; i < wss.currentSockets.length; i++){
             if (wss.currentSockets[i].userID === socket.id) {
@@ -69,7 +80,7 @@ wss.on('connection', (socket, request, client) => {
 ////////////////////////////////////////////////
 // Server
 ////////////////////////////////////////////////
-app.get('/', (req, res, next) => res.send('greetings, earthling'));
+app.get('/', (req, res, next) => res.send('this is socket server'));
 
 // Turn Express App into a Server
 const server = app.listen(PORT, ()=>{
