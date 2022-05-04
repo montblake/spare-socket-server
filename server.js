@@ -22,35 +22,37 @@ const wss = new WebSocketServer({
 wss.currentSockets = [];
 
 // method to create IDs (created on our websocket server object)
-wss.getUniqueID = function () {
-    function s4() {
-        return Math.floor((1 + Math.random()) * 0x10000).toString(16).substring(1);
+wss.updateUsers = function () {
+    const userUpdateMessage = {
+        type: 'update users',
+        users: wss.currentSockets,
     }
-    return s4() + s4() + '-' + s4();
+
+    for (let client of wss.clients){
+        console.log('sending updated users list');
+        client.send(JSON.stringify(userUpdateMessage));
+    }
 };
 
 
 
 
 wss.on('connection', (socket, request, client) => {
-    //  START HERE, a connection is made
     console.log('a connection has been made');
-    // socket.id = wss.getUniqueID();
-    // let message = {
-    //     type: 'welcome', userID: socket.id
-    // }
-
-    // socket.send(JSON.stringify(message), ()=>{
-    //     console.log('welcome message sent');
-    // });
 
     socket.on('message', (message)=>{
         message = JSON.parse(message);
         switch(message.type){
             case 'new user':
+                // set the socketID to match the peerID
                 socket.id = message.userObj.userID;
+                // add new user to current user list
                 wss.currentSockets.push(message.userObj);
+
                 console.log(wss.currentSockets);
+                
+                // send out updated user lists
+                wss.updateUsers();
                 break;
             default: 
                 console.log('message type unrecognized');
@@ -65,15 +67,9 @@ wss.on('connection', (socket, request, client) => {
                 wss.currentSockets.splice(i, 1);
             }
         }
-
-        for (let client of wss.clients){
-            console.log('sending you a users list');
-            const currentUsers = {
-                type: 'updated users',
-                users: wss.currentSockets,
-            }
-            client.send(JSON.stringify(currentUsers));
-        }
+        // send out updated user lists
+        wss.updateUsers();
+       
     });
 });
 
