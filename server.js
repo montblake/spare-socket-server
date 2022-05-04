@@ -21,7 +21,7 @@ const wss = new WebSocketServer({
 // List of currentSockets;
 wss.currentSockets = [];
 
-// method to create IDs (created on our websocket server object)
+// method to send all clients a current users list
 wss.updateUsers = function () {
     const userUpdateMessage = {
         type: 'update users',
@@ -35,13 +35,13 @@ wss.updateUsers = function () {
 };
 
 
-
-
+// LISTENERS
 wss.on('connection', (socket, request, client) => {
-    console.log('a connection has been made');
+    console.log('a socket has been established has been made');
 
     socket.on('message', (message)=>{
         message = JSON.parse(message);
+
         switch(message.type){
             case 'new user':
                 // set the socketID to match the peerID
@@ -50,10 +50,28 @@ wss.on('connection', (socket, request, client) => {
                 wss.currentSockets.push(message.userObj);
 
                 console.log(wss.currentSockets);
-                
+
                 // send out updated user lists
                 wss.updateUsers();
                 break;
+
+            case 'chat message':
+                // receives incoming chat message and
+                // distributes to all clients except the sender
+                // (sender has already attached message to their local chat)
+                // (clients listen for incoming message and add to their local chat)
+                console.log('chat message received');
+                console.log(message);
+                for (let client of wss.clients){
+                    let clientID = client.id;
+                    let senderID = message.signedMessage.from.userID;
+                    if (clientID !== senderID){
+                        console.log("distributing message");
+                        client.send(JSON.stringify(message));
+                    }
+                }
+                break;
+
             default: 
                 console.log('message type unrecognized');
         }
