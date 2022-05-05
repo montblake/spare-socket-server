@@ -72,6 +72,18 @@ wss.on('connection', (socket, request, client) => {
                 }
                 break;
 
+            case 'direct message':
+                console.log('incoming dm');
+                for (let client of wss.clients){
+                    let clientID = client.id;
+                    let targetID = message.target.userID;
+                    if (clientID === targetID){
+                        console.log('sending to ', message.target.userName);
+                        client.send(JSON.stringify(message));
+                    }
+                }
+                break;
+
             default: 
                 console.log('message type unrecognized');
         }
