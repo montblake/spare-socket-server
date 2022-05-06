@@ -46,13 +46,36 @@ wss.on('connection', (socket, request, client) => {
             case 'new user':
                 // set the socketID to match the peerID
                 socket.id = message.userObj.userID;
-                // add new user to current user list
-                wss.currentSockets.push(message.userObj);
 
-                console.log(wss.currentSockets);
+                console.log("new user message!");
+                // add new user to current sockets list
+                const newSocket = {
+                    userName: message.userObj.userName,
+                    userID: message.userObj.userID,
+                }
+                wss.currentSockets.push(newSocket);
 
-                // send out updated user lists
-                wss.updateUsers();
+                // make current users list
+                const currentUsers = {
+                    type: 'update users',
+                    users: wss.currentSockets,
+                }
+
+                // send new user message to all but sender
+                // send updated users to all
+
+                // so for each client:
+                for (let client of wss.clients){
+                    // if you are not the new user...
+                    if (client.id !== message.userObj.userID){
+                        // you get the new user message
+                        // which will initiate video sharing
+                        client.send(JSON.stringify(message));
+                    }
+                    // and all clients (including new user)
+                    // get updated client list 
+                    client.send(JSON.stringify(currentUsers));
+                }
                 break;
 
             case 'chat message':
