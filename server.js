@@ -34,7 +34,7 @@ wss.updateUsers = function() {
     }
 };
 
-wss.removeUser = function(id) {
+wss.sendRemoveUserMessage = function(id) {
      console.log('sending remove user message');
     const removeUserMessage = {
         type: 'remove user',
@@ -128,11 +128,13 @@ wss.on('connection', (socket, request, client) => {
     socket.on('close', (cause) => {
         console.log('socket disconnected', socket.id);
         // should remove socket from wss.currentSockets
+        
         for (let i = 0; i < wss.currentSockets.length; i++){
             if (wss.currentSockets[i].userID === socket.id) {
+                wss.sendRemoveUserMessage(wss.currentSockets[i].userID);
                 wss.currentSockets.splice(i, 1);
                 // send remove user message
-                wss.removeUser(wss.currentSockets[i].userID);
+                
             }
         }
         
