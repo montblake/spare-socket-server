@@ -22,7 +22,7 @@ const wss = new WebSocketServer({
 wss.currentSockets = [];
 
 // method to send all clients a current users list
-wss.updateUsers = function () {
+wss.updateUsers = function() {
     const userUpdateMessage = {
         type: 'update users',
         users: wss.currentSockets,
@@ -33,6 +33,19 @@ wss.updateUsers = function () {
         client.send(JSON.stringify(userUpdateMessage));
     }
 };
+
+wss.removeUser = function(id) {
+     console.log('sending remove user message');
+    const removeUserMessage = {
+        type: 'remove user',
+        userID: id,
+    }
+
+    for (let client of wss.clients){
+        client.send(JSON.stringify(removeUserMessage));
+    }
+
+}
 
 
 // LISTENERS
@@ -118,8 +131,11 @@ wss.on('connection', (socket, request, client) => {
         for (let i = 0; i < wss.currentSockets.length; i++){
             if (wss.currentSockets[i].userID === socket.id) {
                 wss.currentSockets.splice(i, 1);
+                // send remove user message
+                wss.removeUser(currentSockets[i].userID);
             }
         }
+        
         // send out updated user lists
         wss.updateUsers();
        
