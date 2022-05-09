@@ -132,7 +132,7 @@ wss.on('connection', (socket, request, client) => {
             if (wss.currentSockets[i].userID === socket.id) {
                 wss.currentSockets.splice(i, 1);
                 // send remove user message
-                wss.removeUser(currentSockets[i].userID);
+                wss.removeUser(wss.currentSockets[i].userID);
             }
         }
         
